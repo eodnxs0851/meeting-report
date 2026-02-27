@@ -79,7 +79,7 @@
 
         .doc-header {
             display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 30px; border-bottom: 2px solid var(--dark-navy); padding-bottom: 15px;
+            margin-bottom: 25px; border-bottom: 2px solid var(--dark-navy); padding-bottom: 15px;
         }
         .doc-type { font-size: 11px; font-weight: 800; color: var(--samsung-blue); letter-spacing: 2px; display: block; margin-bottom: 4px; text-transform: uppercase;}
         .header-left h1 { font-size: 26px; font-weight: 800; margin: 0; color: var(--dark-navy); letter-spacing: -0.5px; }
@@ -87,29 +87,43 @@
 
         .executive-summary {
             background-color: var(--section-bg); border-left: 5px solid var(--samsung-blue);
-            padding: 20px 25px; margin-bottom: 35px; border-radius: 0 4px 4px 0;
+            padding: 15px 20px; margin-bottom: 25px; border-radius: 0 4px 4px 0;
         }
         .section-label {
             font-size: 12px; font-weight: 800; color: var(--samsung-blue);
-            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block;
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block;
         }
         .summary-text { 
-            font-size: 15px; line-height: 1.7; color: #222; font-weight: 600; white-space: pre-line; 
+            font-size: 14px; line-height: 1.6; color: #222; font-weight: 600; white-space: pre-line; 
         }
 
-        .detail-section { margin-bottom: 30px; }
+        .detail-section { margin-bottom: 20px; }
         .detail-content { 
-            font-size: 14px; line-height: 1.8; color: #333; white-space: pre-wrap; 
+            font-size: 14px; line-height: 1.7; color: #333; white-space: pre-wrap; 
             text-align: justify; word-break: keep-all; 
         }
         
+        /* [수정됨] 결과 섹션: 여백 완전 제거 및 타이트하게 조정 */
         .result-section { 
-            margin-top: 30px; padding: 20px; border: 1px solid #ddd; 
-            background: #fff; border-radius: 4px; display: none; 
+            margin-top: 20px; 
+            padding: 15px 15px 10px 15px; /* 하단 패딩을 줄임 */
+            border: 1px solid #ddd; 
+            background: #fff; 
+            border-radius: 4px; 
+            display: none; 
+            height: fit-content; /* 내용물 크기에 딱 맞춤 */
+            min-height: 0; /* 최소 높이 제거 */
         }
         .result-title { 
-            font-size: 14px; font-weight: 800; color: var(--dark-navy); margin-bottom: 12px; display: block; 
-            border-bottom: 1px dashed #ccc; padding-bottom: 8px;
+            font-size: 14px; font-weight: 800; color: var(--dark-navy); margin-bottom: 8px; display: block; 
+            border-bottom: 1px dashed #ccc; padding-bottom: 6px;
+        }
+        /* 결과 텍스트 자체의 위아래 공백 제거 및 줄간격 조정 */
+        #out-result { 
+            margin-top: 0; 
+            padding-top: 2px; 
+            line-height: 1.5;
+            white-space: pre-wrap; /* 줄바꿈 유지 */
         }
 
         .doc-footer {
@@ -146,8 +160,7 @@
         <div class="input-group" style="background: #eef1f5; padding: 15px; border-radius: 6px; border: 1px solid #ddd;">
             <label style="color:var(--samsung-blue); margin-bottom: 6px;">STEP 1. AI 프롬프트 복사</label>
             <div style="font-size: 12px; color: #666; margin-bottom: 12px; line-height: 1.4;">
-                <b>[팁]</b> 이제 AI가 답변에 <b>'복사 버튼'</b>을 달아줍니다.<br>
-                버튼 하나로 복사해서 아래 칸에 붙여넣으세요.
+                <b>[팁]</b> AI 답변의 <b>[Copy]</b> 버튼으로 복사하세요.
             </div>
             <button class="btn-copy-prompt" onclick="copyPrompt()">📋 프롬프트 복사하기</button>
         </div>
@@ -182,7 +195,7 @@
             </header>
 
             <section class="executive-summary">
-                <span class="section-label">Executive Summary (Key Takeaways)</span>
+                <span class="section-label">Executive Summary</span>
                 <div class="summary-text" id="out-summary">- 내용을 입력해주세요.</div>
             </section>
 
@@ -191,7 +204,8 @@
                 <div class="detail-content" id="out-detail">- 상세 내용이 여기에 표시됩니다.</div>
 
                 <div class="detail-content result-section" id="out-result-wrapper">
-                    <span class="result-title">■ 결정 사항 및 Action Item</span>
+                    <!-- [수정됨] 타이틀 간소화: 결정 사항 -->
+                    <span class="result-title">■ 결정 사항</span>
                     <div id="out-result"></div>
                 </div>
             </section>
@@ -204,7 +218,6 @@
     </div>
 
     <script>
-        // 1. 초기 설정
         const dateInput = document.getElementById('in-date');
         const today = new Date();
         dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -226,58 +239,50 @@
         });
         updateMeta();
 
-        // 2. 프롬프트 복사 (복사 버튼 생성 로직 추가)
+        // 프롬프트: 생각 금지, 원문 단어 사용 강제
         function copyPrompt() {
             const promptText = `
-당신은 대기업 전략기획팀의 수석입니다. 입력된 회의 속기록을 바탕으로 "가독성 최상"의 보고서를 작성해야 합니다.
+당신은 '건조한 속기사'입니다. 입력된 회의 내용을 정리하여 보고서를 작성하십시오.
 
-[작성 원칙 - 절대 준수]
-1. **내용 누락 금지:** 원문의 팩트, 수치, 날짜, 고유명사는 100% 반영하십시오.
-2. **오타/비문 수정:** 전문적인 비즈니스 용어로 교정하십시오.
-3. **개조식 강제:** 모든 문장은 명사형(~함, ~음, ~결정)으로 끝내십시오. 줄글 서술형은 절대 금지입니다.
-4. **가독성 강화:** 항목의 성격에 맞는 이모지를 사용하여 시각적으로 구분해주십시오.
+[절대 원칙 - 위반 시 오답 처리]
+1. **창작 금지:** 당신의 의견이나 해석을 덧붙이지 마십시오. 회의록에 있는 팩트만 전달하십시오.
+2. **원문 단어 유지:** 가급적 회의록 원문에 사용된 고유명사와 전문 용어를 그대로 사용하십시오. (멋있게 보이려고 단어를 바꾸지 말 것)
+3. **개조식 강제:** 모든 문장은 "~함", "~음", "~결정", "~완료"로 끝내십시오. 줄글 금지.
+4. **가독성:** 이모지를 활용하여 시각적으로 정리하십시오.
 
-[매우 중요 - 출력 방식]
-**사용자가 결과를 한 번에 복사할 수 있도록, 전체 답변 내용을 코드 블록(\`\`\`text ... \`\`\`) 안에 넣어서 출력하십시오.**
+[출력 방식]
+**반드시 아래 내용을 복사하기 편하게 '코드 블록(\`\`\`text)' 안에 담아서 출력하십시오.**
 
-[출력 양식 - 코드 블록 내부 내용]
+[출력 양식]
 [요약]
-(전체 내용을 핵심만 3줄로 요약. 번호 매기기)
-1. 첫 번째 핵심 결론 (~함)
-2. 두 번째 핵심 결론 (~함)
-3. 세 번째 핵심 결론 (~함)
+(핵심만 3줄로 요약)
+1. 첫 번째 결론 (~함)
+2. 두 번째 결론 (~함)
+3. 세 번째 결론 (~함)
 
 [상세]
-(주제별로 그룹화하여 작성. 아래 이모지 활용)
-📌 [주제 1 제목]
+(주제별 그룹화)
+📌 [주제]
 - (내용) ~~~함
 - (내용) ~~~음
    └ ✔️ (세부사항) ~~~ 확인
 
-📌 [주제 2 제목]
-- (내용) ~~~ 보고
-   └ ⚠️ (이슈사항) ~~~ 문제 발생
-
 [결과]
-(결정 사항과 향후 계획 명시)
-✅ 결정사항: ~~~ 승인 완료
-📅 향후계획:
-- [10/25] 중간 점검 (담당: 홍길동)
-- [11/01] 최종 보고
+(최종 결정된 사항만 명료하게)
+✅ 결정: ~~~ 승인됨
+📅 계획:
+- [날짜] 할 일 (담당자)
 
 ----
 (여기 밑에 회의 내용을 붙여넣으세요)
 `;
             navigator.clipboard.writeText(promptText).then(() => {
-                alert('✅ 프롬프트가 복사되었습니다!\n\nAI가 답변을 줄 때 [Copy] 버튼이 달린 상자에 담아서 줄 겁니다.\n그 버튼을 눌러서 편하게 복사해오세요.');
+                alert('✅ 프롬프트 복사 완료!\n\nAI의 창작을 막고 팩트만 건조하게 정리하도록 설정했습니다.\n채팅창에 붙여넣고 회의록을 입력하세요.');
             });
         }
 
-        // 3. 텍스트 파싱 (코드블록 기호 제거 기능 추가)
         function applyFormat() {
             let rawText = document.getElementById('in-raw-text').value;
-
-            // 핵심: 사용자가 코드블록째로 복사해왔을 경우, 앞뒤의 ```text, ``` 등을 제거
             rawText = rawText.replace(/^```[a-zA-Z]*\n?/g, '').replace(/```$/g, '').trim();
             
             let summary = "";
@@ -295,7 +300,6 @@
 
                 if (!summary && !detail && !result) {
                     detail = rawText; 
-                    if(rawText.trim() !== "") alert("⚠️ 형식을 감지하지 못했습니다. (전체 내용이 상세에 표시됩니다)");
                 }
 
             } catch (e) {
@@ -303,21 +307,21 @@
                 detail = rawText;
             }
 
-            document.getElementById('out-summary').innerText = summary ? summary : "- 내용을 입력해주세요.";
-            document.getElementById('out-detail').innerText = detail ? detail : "- 상세 내용이 표시됩니다.";
+            // 트림(trim)을 해서 앞뒤 공백을 한 번 더 제거
+            document.getElementById('out-summary').innerText = summary ? summary.trim() : "- 내용을 입력해주세요.";
+            document.getElementById('out-detail').innerText = detail ? detail.trim() : "- 상세 내용이 표시됩니다.";
             
             const resultWrapper = document.getElementById('out-result-wrapper');
             const resultDiv = document.getElementById('out-result');
             
             if (result) {
-                resultDiv.innerText = result;
+                resultDiv.innerText = result.trim(); // 결과 텍스트 공백 제거
                 resultWrapper.style.display = 'block';
             } else {
                 resultWrapper.style.display = 'none';
             }
         }
 
-        // 4. PDF 다운로드
         function exportPDF() {
             const element = document.getElementById('report-content');
             const opt = {
@@ -330,7 +334,6 @@
             html2pdf().set(opt).from(element).save();
         }
 
-        // 5. JPG 다운로드
         function exportJPG() {
             const element = document.getElementById('report-content');
             html2canvas(element, { scale: 2, useCORS: true, logging: false }).then(canvas => {

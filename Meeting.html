@@ -2,15 +2,16 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 모바일 화면 비율을 맞추기 위한 필수 태그 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Samsung Style Meeting Report</title>
     <!-- PDF 변환 라이브러리 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         /* 1. Samsung Design Identity */
         :root {
-            --samsung-blue: #1428A0;    /* 삼성 블루 */
-            --dark-navy: #03142F;       /* 깊은 네이비 */
+            --samsung-blue: #1428A0;
+            --dark-navy: #03142F;
             --light-grey: #F4F4F4;
             --white: #FFFFFF;
             --border-color: #E0E0E0;
@@ -29,6 +30,8 @@
             justify-content: center;
             gap: 40px;
             color: var(--dark-navy);
+            /* 모바일 대응을 위해 flex-wrap 추가 */
+            flex-wrap: wrap; 
         }
 
         /* 2. 에디터 패널 (좌측) */
@@ -39,8 +42,10 @@
             border-radius: 4px;
             box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
             height: fit-content;
+            /* 스티키 옵션은 PC에서만 유효하도록 설정할 예정 */
             position: sticky;
             top: 40px;
+            z-index: 10;
         }
 
         .editor-panel h2 {
@@ -67,6 +72,8 @@
             border-radius: 2px;
             font-family: inherit; font-size: 14px; 
             box-sizing: border-box; transition: border-color 0.2s;
+            /* 모바일 입력 시 폰트 크기 자동 확대 방지 (16px 이상) */
+            font-size: 16px; 
         }
         .input-field:focus { outline: none; border-color: var(--samsung-blue); }
         textarea.input-field { resize: vertical; min-height: 100px; line-height: 1.6; }
@@ -87,11 +94,16 @@
             background: #525659;
             padding: 40px;
             border-radius: 4px;
+            /* 모바일에서 A4가 넘칠 경우 스크롤 처리 */
+            overflow-x: auto; 
         }
 
         #report-content {
+            /* A4 고정 사이즈 (중요: 모바일에서도 이 크기는 유지되어야 PDF가 정상 출력됨) */
             width: 210mm;
             min-height: 297mm;
+            /* flex-shrink 0을 줘서 찌그러짐 방지 */
+            flex-shrink: 0; 
             background: white;
             padding: 25mm;
             box-sizing: border-box;
@@ -99,7 +111,6 @@
         }
 
         /* === 리포트 스타일 === */
-        
         .doc-header {
             display: flex;
             justify-content: space-between;
@@ -108,104 +119,38 @@
             border-bottom: 1px solid var(--dark-navy);
             padding-bottom: 20px;
         }
-
         .header-left .doc-type {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--samsung-blue);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            display: block;
+            font-size: 10px; font-weight: 700; color: var(--samsung-blue);
+            letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; display: block;
         }
-
         .header-left h1 {
-            font-size: 26px;
-            font-weight: 700;
-            margin: 0;
-            line-height: 1.3;
-            color: var(--dark-navy);
-            min-height: 34px;
+            font-size: 26px; font-weight: 700; margin: 0; line-height: 1.3; color: var(--dark-navy); min-height: 34px;
         }
-        .header-left h1:empty::before {
-            content: "보고서 제목을 입력하세요";
-            color: var(--border-color);
-            font-weight: 400;
-        }
-
-        .header-right {
-            text-align: right;
-            font-size: 11px;
-            color: #666;
-            line-height: 1.6;
-            min-width: 120px;
-        }
+        .header-left h1:empty::before { content: "보고서 제목을 입력하세요"; color: var(--border-color); font-weight: 400; }
         
-        /* 날짜 및 작성자 스타일 */
+        .header-right { text-align: right; font-size: 11px; color: #666; line-height: 1.6; min-width: 120px; }
         #out-date { font-family: 'Pretendard', sans-serif; }
-        
-        #out-author:empty::before {
-            content: "작성자 입력";
-            color: var(--border-color);
-        }
-
-        /* REPORT 문구 제거됨 */
+        #out-author:empty::before { content: "작성자 입력"; color: var(--border-color); }
 
         .executive-summary {
-            background-color: #F7F8FA;
-            border-top: 2px solid var(--samsung-blue);
-            padding: 24px;
-            margin-bottom: 40px;
-            min-height: 60px;
+            background-color: #F7F8FA; border-top: 2px solid var(--samsung-blue);
+            padding: 24px; margin-bottom: 40px; min-height: 60px;
         }
-
         .section-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--samsung-blue);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-            display: block;
+            font-size: 11px; font-weight: 700; color: var(--samsung-blue);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block;
         }
-
-        .summary-text {
-            font-size: 15px;
-            line-height: 1.6;
-            color: #333;
-            font-weight: 500;
-            white-space: pre-line;
-        }
-        .summary-text:empty::before {
-            content: "핵심 요약 내용을 입력하세요.";
-            color: var(--placeholder-color);
-        }
+        .summary-text { font-size: 15px; line-height: 1.6; color: #333; font-weight: 500; white-space: pre-line; }
+        .summary-text:empty::before { content: "핵심 요약 내용을 입력하세요."; color: var(--placeholder-color); }
 
         .detail-section { margin-bottom: 30px; min-height: 100px; }
-        .detail-content {
-            font-size: 14px;
-            line-height: 1.8;
-            color: #222;
-            white-space: pre-wrap;
-            text-align: justify;
-        }
-        .detail-content:empty::before {
-            content: "상세 회의 내용을 입력하세요.";
-            color: var(--placeholder-color);
-        }
+        .detail-content { font-size: 14px; line-height: 1.8; color: #222; white-space: pre-wrap; text-align: justify; }
+        .detail-content:empty::before { content: "상세 회의 내용을 입력하세요."; color: var(--placeholder-color); }
 
-        /* 푸터: 텍스트 없이 선만 유지 */
         .doc-footer {
-            position: absolute;
-            bottom: 20mm;
-            left: 25mm;
-            right: 25mm;
-            border-top: 1px solid #eee;
-            padding-top: 12px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 9px;
-            color: #999;
+            position: absolute; bottom: 20mm; left: 25mm; right: 25mm;
+            border-top: 1px solid #eee; padding-top: 12px;
+            display: flex; justify-content: space-between; font-size: 9px; color: #999;
         }
 
         /* 로딩 화면 */
@@ -213,8 +158,52 @@
             position: fixed; top:0; left:0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.9); z-index: 9999;
             display: none; justify-content: center; align-items: center;
-            flex-direction: column; color: var(--samsung-blue);
-            font-weight: bold; font-size: 18px;
+            flex-direction: column; color: var(--samsung-blue); font-weight: bold; font-size: 18px;
+        }
+
+        /* 📱 모바일 최적화 (미디어 쿼리) */
+        @media screen and (max-width: 900px) {
+            body {
+                padding: 10px; /* 여백 줄임 */
+                gap: 20px;
+                flex-direction: column; /* 위아래 배치로 변경 */
+            }
+
+            .editor-panel {
+                width: 100%; /* 전체 너비 사용 */
+                max-width: none;
+                position: relative; /* 스티키 해제 */
+                top: 0;
+                box-sizing: border-box; /* 패딩 포함 너비 계산 */
+                padding: 20px;
+            }
+
+            .preview-wrapper {
+                width: 100%;
+                box-sizing: border-box;
+                padding: 10px;
+                /* 모바일에서 미리보기는 가로 스크롤 허용 (A4 비율 유지 위함) */
+                align-items: flex-start; 
+                justify-content: flex-start;
+            }
+            
+            /* 모바일에서 미리보기가 너무 크면 사용자가 당황할 수 있으니 안내 문구 추가 */
+            .preview-wrapper::before {
+                content: "← 미리보기 화면을 좌우로 스크롤하세요 →";
+                display: block;
+                width: 100%;
+                text-align: center;
+                color: #ccc;
+                font-size: 12px;
+                margin-bottom: 10px;
+                position: absolute;
+                top: 5px;
+                left: 0;
+            }
+            .preview-wrapper {
+                padding-top: 30px; /* 안내 문구 공간 확보 */
+                position: relative;
+            }
         }
     </style>
 </head>
@@ -247,7 +236,7 @@
         </div>
         <div class="input-group">
             <label>Details</label>
-            <textarea id="in-content" class="input-field" style="height: 300px;" placeholder="상세 내용을 입력하세요.&#13;&#10;1. 주요 안건&#13;&#10;2. 결정 사항&#13;&#10;3. 향후 계획"></textarea>
+            <textarea id="in-content" class="input-field" style="height: 200px;" placeholder="상세 내용을 입력하세요.&#13;&#10;1. 주요 안건&#13;&#10;2. 결정 사항&#13;&#10;3. 향후 계획"></textarea>
         </div>
         <button class="btn-download" onclick="exportPDF()">EXPORT TO PDF</button>
     </div>
@@ -263,7 +252,6 @@
                 <div class="header-right">
                     <div id="out-date"></div>
                     <div id="out-author"></div>
-                    <!-- 'REPORT' 문구 제거됨 -->
                 </div>
             </header>
 
@@ -277,7 +265,6 @@
                 <div class="detail-content" id="out-content"></div>
             </section>
 
-            <!-- 푸터: 텍스트 없음 -->
             <footer class="doc-footer">
                 <div></div>
                 <div></div>

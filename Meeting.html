@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samsung Style Meeting Report</title>
+    <!-- PDF 변환 라이브러리 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* 1. Samsung Design Identity */
+        :root {
+            --samsung-blue: #1428A0;    /* 삼성 블루 */
+            --dark-navy: #03142F;       /* 깊은 네이비 */
+            --light-grey: #F4F4F4;
+            --white: #FFFFFF;
+            --border-color: #E0E0E0;
+            --placeholder-color: #A0A0A0;
+            --font-family: 'SamsungOne', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+        }
+
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        body {
+            font-family: var(--font-family);
+            background-color: #eef1f5;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            color: var(--dark-navy);
+        }
+
+        /* 2. 에디터 패널 (좌측) */
+        .editor-panel {
+            width: 380px;
+            background: var(--white);
+            padding: 32px;
+            border-radius: 4px;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
+            height: fit-content;
+            position: sticky;
+            top: 40px;
+        }
+
+        .editor-panel h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--samsung-blue);
+            margin: 0 0 24px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--samsung-blue);
+            padding-bottom: 12px;
+        }
+
+        .input-group { margin-bottom: 20px; }
+        .input-group label {
+            display: block; font-size: 12px; font-weight: 600; color: #555;
+            margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        
+        .input-field {
+            width: 100%; padding: 12px; 
+            border: 1px solid var(--border-color);
+            background-color: #fcfcfc;
+            border-radius: 2px;
+            font-family: inherit; font-size: 14px; 
+            box-sizing: border-box; transition: border-color 0.2s;
+        }
+        .input-field:focus { outline: none; border-color: var(--samsung-blue); }
+        textarea.input-field { resize: vertical; min-height: 100px; line-height: 1.6; }
+
+        .btn-download {
+            width: 100%; background: var(--samsung-blue); color: white; border: none;
+            padding: 16px; border-radius: 2px; font-size: 14px; font-weight: 600;
+            cursor: pointer; margin-top: 16px; letter-spacing: 0.5px;
+            transition: background 0.2s;
+        }
+        .btn-download:hover { background: #0b1a75; }
+
+        /* 3. 미리보기 & PDF 출력 영역 (우측) */
+        .preview-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            background: #525659;
+            padding: 40px;
+            border-radius: 4px;
+        }
+
+        #report-content {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            padding: 25mm;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* === 리포트 스타일 === */
+        
+        .doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--dark-navy);
+            padding-bottom: 20px;
+        }
+
+        .header-left .doc-type {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--samsung-blue);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .header-left h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.3;
+            color: var(--dark-navy);
+            min-height: 34px;
+        }
+        .header-left h1:empty::before {
+            content: "보고서 제목을 입력하세요";
+            color: var(--border-color);
+            font-weight: 400;
+        }
+
+        .header-right {
+            text-align: right;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.6;
+            min-width: 120px;
+        }
+        
+        /* 날짜 및 작성자 스타일 */
+        #out-date { font-family: 'Pretendard', sans-serif; }
+        
+        #out-author:empty::before {
+            content: "작성자 입력";
+            color: var(--border-color);
+        }
+
+        /* REPORT 문구 제거됨 */
+
+        .executive-summary {
+            background-color: #F7F8FA;
+            border-top: 2px solid var(--samsung-blue);
+            padding: 24px;
+            margin-bottom: 40px;
+            min-height: 60px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--samsung-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .summary-text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #333;
+            font-weight: 500;
+            white-space: pre-line;
+        }
+        .summary-text:empty::before {
+            content: "핵심 요약 내용을 입력하세요.";
+            color: var(--placeholder-color);
+        }
+
+        .detail-section { margin-bottom: 30px; min-height: 100px; }
+        .detail-content {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #222;
+            white-space: pre-wrap;
+            text-align: justify;
+        }
+        .detail-content:empty::before {
+            content: "상세 회의 내용을 입력하세요.";
+            color: var(--placeholder-color);
+        }
+
+        /* 푸터: 텍스트 없이 선만 유지 */
+        .doc-footer {
+            position: absolute;
+            bottom: 20mm;
+            left: 25mm;
+            right: 25mm;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #999;
+        }
+
+        /* 로딩 화면 */
+        #loading {
+            position: fixed; top:0; left:0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9); z-index: 9999;
+            display: none; justify-content: center; align-items: center;
+            flex-direction: column; color: var(--samsung-blue);
+            font-weight: bold; font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading">PDF 생성 중...</div>
+
+    <!-- 입력 패널 -->
+    <div class="editor-panel">
+        <h2>Report Generator</h2>
+        
+        <div class="input-group">
+            <label>Date (회의 날짜)</label>
+            <input type="date" id="in-date" class="input-field">
+        </div>
+
+        <div class="input-group">
+            <label>Title</label>
+            <input type="text" id="in-title" class="input-field" placeholder="보고서 제목 입력">
+        </div>
+        
+        <div class="input-group">
+            <label>Author</label>
+            <input type="text" id="in-author" class="input-field" placeholder="작성자 이름 입력">
+        </div>
+
+        <div class="input-group">
+            <label>Executive Summary</label>
+            <textarea id="in-summary" class="input-field" placeholder="핵심 요약을 입력하세요 (2~3줄 권장)"></textarea>
+        </div>
+        <div class="input-group">
+            <label>Details</label>
+            <textarea id="in-content" class="input-field" style="height: 300px;" placeholder="상세 내용을 입력하세요.&#13;&#10;1. 주요 안건&#13;&#10;2. 결정 사항&#13;&#10;3. 향후 계획"></textarea>
+        </div>
+        <button class="btn-download" onclick="exportPDF()">EXPORT TO PDF</button>
+    </div>
+
+    <!-- 미리보기 영역 -->
+    <div class="preview-wrapper">
+        <div id="report-content">
+            <header class="doc-header">
+                <div class="header-left">
+                    <span class="doc-type">Meeting Report</span>
+                    <h1 id="out-title"></h1>
+                </div>
+                <div class="header-right">
+                    <div id="out-date"></div>
+                    <div id="out-author"></div>
+                    <!-- 'REPORT' 문구 제거됨 -->
+                </div>
+            </header>
+
+            <section class="executive-summary">
+                <span class="section-label">Executive Summary</span>
+                <div class="summary-text" id="out-summary"></div>
+            </section>
+
+            <section class="detail-section">
+                <span class="section-label" style="color: #666; border-bottom: 1px solid #ddd; width: 100%; padding-bottom: 5px; margin-bottom: 15px;">Detailed Information</span>
+                <div class="detail-content" id="out-content"></div>
+            </section>
+
+            <!-- 푸터: 텍스트 없음 -->
+            <footer class="doc-footer">
+                <div></div>
+                <div></div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // 1. 날짜 로직
+        const dateInput = document.getElementById('in-date');
+        const dateOutput = document.getElementById('out-date');
+
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+        
+        function updateDateDisplay(dateString) {
+            if (!dateString) return;
+            const parts = dateString.split('-');
+            dateOutput.innerText = `Date: ${parts[0]}.${parts[1]}.${parts[2]}`;
+        }
+
+        updateDateDisplay(dateInput.value);
+
+        dateInput.addEventListener('input', (e) => {
+            updateDateDisplay(e.target.value);
+        });
+
+        // 2. 필드 동기화
+        const sync = (idIn, idOut) => {
+            const elIn = document.getElementById(idIn);
+            const elOut = document.getElementById(idOut);
+            if(elIn && elOut) {
+                elIn.addEventListener('input', (e) => {
+                    elOut.innerText = e.target.value;
+                });
+            }
+        };
+        sync('in-title', 'out-title');
+        sync('in-author', 'out-author');
+        sync('in-summary', 'out-summary');
+        sync('in-content', 'out-content');
+
+        // 3. PDF 출력
+        function exportPDF() {
+            const element = document.getElementById('report-content');
+            
+            const title = document.getElementById('in-title').value;
+            const content = document.getElementById('in-content').value;
+            if(!title && !content) {
+                if(!confirm("내용이 비어있습니다. PDF로 저장하시겠습니까?")) return;
+            }
+
+            const loading = document.getElementById('loading');
+            loading.style.display = 'flex';
+
+            const selectedDate = dateInput.value.replace(/-/g, '');
+            
+            const opt = {
+                margin:       0,
+                filename:     `MeetingReport_${selectedDate}.pdf`,
+                image:        { type: 'jpeg', quality: 1 },
+                html2canvas:  { scale: 2, scrollY: 0, useCORS: true, letterRendering: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            setTimeout(() => {
+                html2pdf().set(opt).from(element).save().then(() => {
+                    loading.style.display = 'none';
+                }).catch(err => {
+                    alert('PDF 생성 오류');
+                    console.error(err);
+                    loading.style.display = 'none';
+                });
+            }, 500);
+        }
+    </script>
+</body>
+</html>
